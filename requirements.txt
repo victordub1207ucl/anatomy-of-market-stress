@@ -1,0 +1,13 @@
+numpy
+pandas
+pyarrow
+scipy
+scikit-learn
+statsmodels
+matplotlib
+networkx
+joblib
+pytest
+yfinance        # only needed to rebuild the raw price panel; committed parquets suffice
+nbformat        # notebooks only
+nbclient        # notebooks only

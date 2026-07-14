@@ -1,0 +1,21 @@
+# caches & bytecode
+__pycache__/
+*.pyc
+.pytest_cache/
+.cache/
+reports/model_cache/
+archive/graphify-out/cache/
+
+# archives (duplicates of tracked dirs)
+*.zip
+
+# OS / editor
+.DS_Store
+*.log
+
+# local scratch
+scratch/
+
+# local tooling
+.claude/
+docs/graphify-out/

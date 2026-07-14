@@ -1,0 +1,42 @@
+{
+  "dev_rows": 2966,
+  "dev_pos_rate": 0.559676331759946,
+  "target_threshold": 13.66102577093945,
+  "features": [
+    "credit_ret_ma21",
+    "eq_credit_corr_63",
+    "eq_drawdown_63",
+    "eq_rates_corr_63",
+    "eq_ret_lag1",
+    "eq_ret_ma21",
+    "eq_ret_ma5",
+    "eq_vol_21",
+    "eq_vol_63",
+    "rates_ret_ma21",
+    "rates_vol_63",
+    "regime_lag1",
+    "regime_ma21",
+    "turb_lag1",
+    "turb_lag21",
+    "turb_lag5",
+    "turb_ma21",
+    "turb_ma5",
+    "turb_ma63",
+    "turb_std21",
+    "turb_std5",
+    "turb_std63",
+    "turb_zscore_252",
+    "vix_log_lag1",
+    "vix_ma21"
+  ],
+  "n_subsets": 56,
+  "n_eval": 200,
+  "censors": [
+    0.0,
+    0.2,
+    0.5,
+    0.8
+  ],
+  "r2_proxy_full_subset": 0.08818424086862302,
+  "shrinkage_intensity": 0.036091675126422584
+}
