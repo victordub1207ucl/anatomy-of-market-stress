@@ -145,6 +145,7 @@ def main() -> int:
                      "maxdd_bh": max_drawdown(bh.dropna())})
         if loss == HEADLINE_LOSS:
             headline = dict(y=y, opred_cal=opred_cal, olab=olab, opred=opred,
+                            dpred=dpred,
                             dpred_cal=dpred_cal, dlab=dlab, eq_oos=eq_oos,
                             in_mkt=in_force, strat=strat_force, bh=bh, tau=best_tau,
                             lift_devtau=lift_cal, in_cash_devtau=frac_cash)
@@ -168,6 +169,13 @@ def main() -> int:
     ssum = summary_statistics(slide, "sortino_lift")
     print(f"49-cutoff (5% target): median {ssum['median']:+.3f}, frac+ {ssum['frac_positive']:.0%}")
     slide.to_parquet(OUT_DIR / "sliding_5pct.parquet")  # for the thesis-figure generator
+    # persist the headline OOS frame so downstream figures read the analysis
+    # rather than re-deriving it (see make_thesis_figures.fig_correction_overlay)
+    pd.DataFrame({"pred_raw": h["opred"].reindex(h["opred_cal"].index),
+                  "pred_cal": h["opred_cal"], "label": h["olab"],
+                  "in_market": h["in_mkt"], "eq_ret": h["eq_oos"],
+                  }).to_parquet(OUT_DIR / "headline_oos_5pct.parquet")
+    h["dpred"].to_frame("pred_raw").to_parquet(OUT_DIR / "headline_dev_5pct.parquet")
 
     # ---------------- figure ----------------
     fig, ax = plt.subplots(2, 2, figsize=(14, 9))
@@ -187,6 +195,16 @@ def main() -> int:
             m = idx == b
             if m.sum() > 5: xs.append(pred[m].mean()); ys.append(lab_.values[m].mean())
         a.plot(xs, ys, "-o", color=col, label=name)
+    # The calibrated series is near-degenerate: isotonic maps almost every day to
+    # one value. A single plotted point looks like a rendering fault, so say so.
+    _mode = h["opred_cal"].round(3).mode().iloc[0]
+    _share = float((h["opred_cal"].round(3) == _mode).mean())
+    if _share > 0.5:
+        a.annotate(f"calibrated $\\to$ {_mode:.2f} on {_share:.0%} of days\n"
+                   f"(base rate {h['olab'].mean():.2f})",
+                   xy=(_mode, h["olab"].mean()), xytext=(0.42, 0.62),
+                   fontsize=8.5, color="#2ca02c",
+                   arrowprops=dict(arrowstyle="->", color="#2ca02c", lw=1.0))
     a.plot([0, 1], [0, 1], "k--", lw=0.8); a.set_xlabel("predicted P"); a.set_ylabel("observed freq")
     a.set_title(f"Calibration (Brier {res.loc['5%','brier_raw']:.3f}→{res.loc['5%','brier_cal']:.3f})")
     a.legend(fontsize=9); a.grid(alpha=0.3)
@@ -204,7 +222,7 @@ def main() -> int:
     a.set_xlabel("Sortino lift (49 cutoffs, gross)"); a.set_ylabel("count")
     a.set_title(f"Robustness — {ssum['frac_positive']:.0%} of cutoffs positive")
     a.legend(fontsize=9); a.grid(alpha=0.3)
-    fig.suptitle("Step 20 — calibrated correction-timing overlay (equity factor)", fontsize=13, y=1.0)
+    fig.suptitle("Calibrated correction-timing overlay (equity factor)", fontsize=13, y=1.0)
     fig.tight_layout()
     fig.savefig(FIG_DIR / "correction_overlay.png", dpi=150, bbox_inches="tight")
     plt.close(fig)

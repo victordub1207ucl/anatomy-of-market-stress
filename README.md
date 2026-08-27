@@ -29,9 +29,19 @@ The full graded findings ledger, with every negative result, is in the paper.
 
 ```bash
 pip install -r requirements.txt
-python run_all.py --core     # the nine scripts behind every number in the report (~10 min)
+python run_all.py --core     # the nine core pipeline scripts (~10 min)
 python run_all.py --full     # + every robustness and side experiment (~30 min)
+python thesis_numbers.py     # figures quoted in the thesis that no single step produces
+python thesis_figures.py     # the thesis figures, into figures/thesis/
 ```
+
+`run_all.py` produces the pipeline's own results. Two further scripts cover the rest of
+what the write-up quotes: `thesis_numbers.py` re-derives the values assembled across steps
+(the matched-exposure blend of Table 6.4, the Visibility bootstrap interval, the
+date-block bootstrap on the routing correlation, the silhouette profile, the meta-crisis
+grouping and the gate counts), and `thesis_figures.py` renders the figures as they appear
+in the thesis. Pass `--slow` to `thesis_numbers.py` to re-derive the sector-universe
+archetypes, and `--out DIR` to `thesis_figures.py` to write elsewhere.
 
 ## The nine core scripts
 

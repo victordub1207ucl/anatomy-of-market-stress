@@ -1,6 +1,6 @@
 # CHECKPOINT — Step 20: calibrated correction-timing overlay
 
-**Generated:** 2026-06-23 16:29 UTC
+**Generated:** 2026-08-02 11:02 UTC
 
 ## What was built
 A deployable overlay on the **equity factor**: predict P(loss ≥ X% over 21d), isotonic-calibrate on dev, go to cash when P ≥ τ (τ dev-selected), charge transaction costs, evaluate vs buy-and-hold and across 49 cutoffs. Probabilities are quarterly walk-forward; calibrator and τ use dev data only.
