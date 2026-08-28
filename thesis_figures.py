@@ -188,7 +188,7 @@ def fig_crisis_drivers():
     ax.axvline(0, color="black", lw=1.0, zorder=4)
     ax.set_yticks(y); ax.set_yticklabels(df.index); ax.invert_yaxis()
     ax.set_xlim(neg.min()-0.03, pos.max()+0.13)
-    ax.set_xlabel("share of episode turbulence  (negative = factor moved with the usual structure)")
+    ax.set_xlabel("share of crisis-window turbulence  (negative = factor moved with the usual structure)")
     ax.grid(axis="y", visible=False)
     # Legend goes BELOW the plot so the title owns the top strip: with ten
     # entries the two overprint each other if they share a row.
