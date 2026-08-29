@@ -37,9 +37,10 @@ python thesis_figures.py     # the thesis figures, into figures/thesis/
 
 `run_all.py` produces the pipeline's own results. Two further scripts cover the rest of
 what the write-up quotes: `thesis_numbers.py` re-derives the values assembled across steps
-(the matched-exposure blend of Table 6.4, the Visibility bootstrap interval, the
-date-block bootstrap on the routing correlation, the silhouette profile, the meta-crisis
-grouping and the gate counts), and `thesis_figures.py` renders the figures as they appear
+(the Granger F ratios of Table 4.3, the matched-exposure blend of Table 6.4, the
+Visibility bootstrap interval, the date-block bootstrap on the routing correlation, the
+silhouette profile, the meta-crisis grouping, the gate counts and the frozen-threshold
+rules of Table A.6), and `thesis_figures.py` renders the figures as they appear
 in the thesis. Pass `--slow` to `thesis_numbers.py` to re-derive the sector-universe
 archetypes, and `--out DIR` to `thesis_figures.py` to write elsewhere.
 

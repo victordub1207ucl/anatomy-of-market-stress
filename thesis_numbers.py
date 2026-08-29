@@ -196,17 +196,103 @@ def sector_archetypes():
               + ", ".join(f"{f} {v:.2f}" for f, v in top.items()))
 
 
+def granger_f_ranking():
+    """Table 4.3 — the Granger F column.
+
+    step16 persists the min-over-lags p-value, which is what the ranking and the
+    "leads escalation?" verdict come from; the F ratios printed alongside them are
+    the largest ssr-F over lags 1..5 on the full turbulence window (every day with
+    a turbulence value, before the regime intersection step16 applies for its
+    regime-conditional half). The ordering is the same either way.
+    """
+    import io, contextlib
+    from statsmodels.tsa.stattools import grangercausalitytests
+    F10 = ["equity", "rates", "credit", "commodities", "em_equity",
+           "fx_usd", "inflation", "value", "quality", "vix"]
+    px = _rd("data/factor_prices.parquet").sort_index()[F10]
+    rets = np.log(px / px.shift(1)).dropna(how="any")
+    turb = _rd("reports/turbulence/turbulence_series.parquet")["turbulence"]
+    y = np.log(turb.replace(0, np.nan)).diff().rename("dlog_turb")
+    data = pd.concat([y, rets], axis=1).dropna()
+    rows = []
+    for f in F10:
+        with warnings.catch_warnings(), contextlib.redirect_stdout(io.StringIO()):
+            warnings.simplefilter("ignore")
+            res = grangercausalitytests(data[["dlog_turb", f]], maxlag=5)
+        Fs = [res[l][0]["ssr_ftest"][0] for l in range(1, 6)]
+        ps = [res[l][0]["ssr_chi2test"][1] for l in range(1, 6)]
+        rows.append({"factor": f, "F": max(Fs), "min_p": min(ps)})
+    df = pd.DataFrame(rows).sort_values("min_p").reset_index(drop=True)
+    print(f"\n== Table 4.3: Granger drivers of escalation (n={len(data)}) ==")
+    for i, r in df.iterrows():
+        print(f"  {i+1:2d}. {r.factor:12s} F {r.F:6.2f}   min-lag p {r.min_p:.2e}")
+
+
+def frozen_threshold_variants():
+    """Table A.6 — the three implementable rules built on a frozen dev threshold.
+
+    step20 persists the walk-forward scores and the dev-selected policy; these three
+    rows freeze the dev 90th percentile of the *model score* instead and are what the
+    text means by a rule that could have been run in real time.
+    """
+    from regime_detection.lib.metrics import sortino_ratio
+    from regime_detection.extras.step20_correction_overlay import (
+        overlay_with_costs, HEADLINE_COST)
+    dev = _rd("reports/correction_overlay/headline_dev_5pct.parquet")
+    oos = _rd("reports/correction_overlay/headline_oos_5pct.parquet")
+    r = oos["eq_ret"]
+    bh = sortino_ratio(r.dropna())
+
+    def lift(in_market):
+        strat, _, _ = overlay_with_costs(
+            r, pd.Series(in_market, index=r.index), HEADLINE_COST)
+        return sortino_ratio(strat.dropna()) - bh
+
+    p = oos["pred_raw"].values
+    tau = float(np.percentile(dev["pred_raw"], 90))
+    med = float(np.percentile(dev["pred_raw"], 50))
+    fires = p >= tau
+
+    plain = (~fires).astype(float)
+
+    out, hysteresis = False, np.ones(len(p))          # re-enter at the dev median
+    for i, x in enumerate(p):
+        if not out and x >= tau:
+            out = True
+        elif out and x < med:
+            out = False
+        hysteresis[i] = 0.0 if out else 1.0
+
+    capped, spell = np.ones(len(p)), 0                # cash spells capped at 21 days
+    for i, x in enumerate(p):
+        if x < tau:
+            spell = 0
+        elif spell < HORIZON:
+            capped[i], spell = 0.0, spell + 1
+        else:
+            spell = 0
+
+    print("\n== Table A.6: rules on a frozen dev 90th-percentile score threshold ==")
+    print(f"  threshold {tau:.4f} is exceeded on {100*fires.mean():.0f}% of held-out days "
+          f"(the dev distribution puts 10% above it)")
+    print(f"  frozen threshold                 Sortino lift {lift(plain):+.3f}")
+    print(f"    with re-entry at the dev median             {lift(hysteresis):+.3f}")
+    print(f"    with cash spells capped at {HORIZON} days           {lift(capped):+.3f}")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--slow", action="store_true",
                     help="also re-derive the sector-universe archetypes")
     args = ap.parse_args()
+    granger_f_ranking()
     matched_exposure_blend()
     visibility_gap_interval()
     duration_trend_block_bootstrap()
     silhouette_and_meta_clusters()
     dollar_inbound_links()
     post2019_correction_counts()
+    frozen_threshold_variants()
     if args.slow:
         sector_archetypes()
     else:
