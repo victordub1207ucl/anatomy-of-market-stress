@@ -65,7 +65,10 @@ def fig_boundary():
     fig, ax = plt.subplots(figsize=(12, 6)); ax.axis("off"); ax.set_xlim(0,10); ax.set_ylim(0,10)
     ax.add_patch(plt.Rectangle((0.2,0.8),4.5,8.4, fc="#fdecea", ec="none"))
     ax.add_patch(plt.Rectangle((5.3,0.8),4.5,8.4, fc="#e9f3ec", ec="none"))
-    ax.plot([5.0,5.0],[0.8,9.2], ls=(0,(6,4)), color="0.3", lw=2.5)
+    # stops above the amber straddling row: it used to print straight through that
+    # row's two grey lines, and a stub below them reads as debris. The white gutter
+    # between the two panels carries the separation the rest of the way down.
+    ax.plot([5.0,5.0],[3.32,9.2], ls=(0,(6,4)), color="0.3", lw=2.5)
     fig.suptitle("The predictability boundary: what a stress signal can and cannot forecast",
                  fontsize=14, fontweight="bold", y=0.99)
     ax.text(2.45,9.55,"TRIGGER", ha="center", fontsize=20, fontweight="bold", color=RED)
@@ -211,9 +214,15 @@ def _draw_net(ax, edges, color, title, sink=None):
         big = (f==sink)
         ax.add_patch(Circle((x,y), 0.16 if big else 0.13,
             fc=(color if big else "white"), ec=color, lw=2, zorder=3))
-        ax.text(x*1.34, y*1.34, NAME[f], ha="center", va="center", fontsize=11,
+        # anchor flank labels outside the circle and run them outward; a centred
+        # radial label put "commodities" back on top of its own node.
+        r = 0.16 if big else 0.13
+        if   x >  0.3: ha, lx, ly = "left",   x + r + 0.10, y
+        elif x < -0.3: ha, lx, ly = "right",  x - r - 0.10, y
+        else:          ha, lx, ly = "center", x * 1.34,     y * 1.34
+        ax.text(lx, ly, NAME[f], ha=ha, va="center", fontsize=11,
                 fontweight="bold" if big else "normal")
-    ax.set_xlim(-1.6,1.6); ax.set_ylim(-1.6,1.6); ax.axis("off"); ax.set_aspect("equal")
+    ax.set_xlim(-2.05,2.05); ax.set_ylim(-1.7,1.7); ax.axis("off"); ax.set_aspect("equal")
     ax.set_title(title, fontsize=12.5)
 
 def fig_causal_networks():
